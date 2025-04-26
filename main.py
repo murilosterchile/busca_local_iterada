@@ -54,50 +54,48 @@ def soma_poder_sinergias(equipamentos, sinergias, indices):
 
     return poder_total
 
+#busca local que escolhe o vizinho usando fist improvement
+def busca_local(equipamentos, sinergias, orcamento, solucao_inicial, indices_iniciais):
 
-def busca_local(equipamentos, sinergias, orcamento, max_iter=100):
-
-    otimo_local = solucao_inicial(orcamento, equipamentos, sinergias)[0]
-    indices_otimo_local = solucao_inicial(orcamento, equipamentos, sinergias)[1]
+    otimo_local = solucao_inicial.copy()
+    indices_otimo_local = indices_iniciais.copy()
     poder_otimo_local = soma_poder_sinergias(otimo_local, sinergias, indices_otimo_local)
-    iteracao = 0
+    melhorou = True
+    indices_para_testar = indices_otimo_local.copy()
+    random.shuffle(indices_para_testar)
 
-    while iteracao < max_iter:
-        iteracao += 1
+    while melhorou:
         melhorou = False
 
+        for j in indices_para_testar:
+            vizinhos = list(set(range(len(equipamentos))) - set(indices_otimo_local))
 
-        for i in range(len(indices_otimo_local)):
-            for j in range(len(equipamentos)):
-                if j not in indices_otimo_local:
-
-                    soma = 0
-
-                    for x in indices_otimo_local:
-                        if x != indices_otimo_local[i]:
-                            soma += equipamentos[x][0]
-                    soma += equipamentos[j][0]
-
-                    novo_custo = soma
-
-                    if novo_custo <= orcamento:
-                        novos_indices = indices_otimo_local.copy()
-                        novos_indices[i] = j
-                        novo_poder = soma_poder_sinergias([equipamentos[x] for x in novos_indices],sinergias,novos_indices)
-
-
-                        if novo_poder > poder_otimo_local:
-                            otimo_local = [equipamentos[x] for x in novos_indices]
-                            indices_otimo_local = novos_indices
-                            poder_otimo_local = novo_poder
-                            melhorou = True
-                            break
-
-            if melhorou:
+            if not vizinhos:
                 break
 
-        if not melhorou:
-            break
+            i = random.choice(vizinhos)
+            novo_custo = 0
+
+            for x in indices_otimo_local:
+                if x != j:
+                    novo_custo += equipamentos[x][0]
+
+            novo_custo += equipamentos[i][0]
+
+            if novo_custo <= orcamento:
+                novos_indices = indices_otimo_local.copy()
+                novos_indices[novos_indices.index(j)] = i
+                novo_poder = soma_poder_sinergias([equipamentos[x] for x in novos_indices], sinergias, novos_indices)
+
+                if novo_poder >= poder_otimo_local:
+                    otimo_local = [equipamentos[x] for x in novos_indices]
+                    indices_otimo_local = novos_indices
+                    poder_otimo_local = novo_poder
+                    indices_para_testar = indices_otimo_local.copy()
+                    random.shuffle(indices_para_testar)
+                    melhorou = True
+                    break
+
 
     return otimo_local, indices_otimo_local
 
@@ -105,13 +103,13 @@ def busca_local(equipamentos, sinergias, orcamento, max_iter=100):
 if __name__ == '__main__':
     orcamento, equipamentos, sinergias = ler_arquivo_equipamentos('dados.txt')
 
-   #para testas a busca local é só tirar o comentário do código abaixo
-   """ sol_inicial, indices_inicial = solucao_inicial(orcamento, equipamentos, sinergias)
+
+    sol_inicial, indices_inicial = solucao_inicial(orcamento, equipamentos, sinergias)
     print("Solução inicial:",  indices_inicial)
     print("Poder inicial:", soma_poder_sinergias(sol_inicial, sinergias, indices_inicial))
 
-    sol_final, indices_final = busca_local(equipamentos, sinergias, orcamento)
+    sol_final, indices_final = busca_local(equipamentos, sinergias, orcamento, sol_inicial, indices_inicial)
     print("Melhor solução:",  indices_final)
-    print("Melhor poder:", soma_poder_sinergias(sol_final, sinergias, indices_final))"""
+    print("Melhor poder:", soma_poder_sinergias(sol_final, sinergias, indices_final))
 
 
