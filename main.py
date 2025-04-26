@@ -105,12 +105,13 @@ def busca_local(equipamentos, sinergias, orcamento, max_iter=100):
 if __name__ == '__main__':
     orcamento, equipamentos, sinergias = ler_arquivo_equipamentos('dados.txt')
 
-    sol_inicial, indices_inicial = solucao_inicial(orcamento, equipamentos, sinergias)
+   #para testas a busca local é só tirar o comentário do código abaixo
+   """ sol_inicial, indices_inicial = solucao_inicial(orcamento, equipamentos, sinergias)
     print("Solução inicial:",  indices_inicial)
     print("Poder inicial:", soma_poder_sinergias(sol_inicial, sinergias, indices_inicial))
 
     sol_final, indices_final = busca_local(equipamentos, sinergias, orcamento)
     print("Melhor solução:",  indices_final)
-    print("Melhor poder:", soma_poder_sinergias(sol_final, sinergias, indices_final))
+    print("Melhor poder:", soma_poder_sinergias(sol_final, sinergias, indices_final))"""
 
 
