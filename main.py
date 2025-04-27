@@ -1,4 +1,7 @@
 import random
+import time
+
+# função para ler o arquivo de dados
 def ler_arquivo_equipamentos(nome_arquivo):
 
     with open(nome_arquivo, 'r') as arquivo:
@@ -22,7 +25,7 @@ def ler_arquivo_equipamentos(nome_arquivo):
 
     return orcamento, equipamentos, matriz_sinergia
 
-
+#solução inicial valida aleatoria
 def solucao_inicial(orcamento,equipamentos,sinergias):
     custo = 0
     aux = []
@@ -39,24 +42,25 @@ def solucao_inicial(orcamento,equipamentos,sinergias):
 
     return aux,aux2
 
-
+# soma o poder e sinergia de um conjunto de equipamentos
 def soma_poder_sinergias(equipamentos, sinergias, indices):
     poder_total = 0
 
     for equipamento in equipamentos:
         poder_total += equipamento[1]
 
+    indexes = sorted(indices)
+
     for i in range(len(indices)):
         for j in range(i):
-            x = indices[i]
-            y = indices[j]
+            x = indexes[i]
+            y = indexes[j]
             poder_total += sinergias[x][y]
 
     return poder_total
 
 #busca local que escolhe o vizinho usando fist improvement
 def busca_local(equipamentos, sinergias, orcamento, solucao_inicial, indices_iniciais):
-
     otimo_local = solucao_inicial.copy()
     indices_otimo_local = indices_iniciais.copy()
     poder_otimo_local = soma_poder_sinergias(otimo_local, sinergias, indices_otimo_local)
@@ -103,13 +107,17 @@ def busca_local(equipamentos, sinergias, orcamento, solucao_inicial, indices_ini
 if __name__ == '__main__':
     orcamento, equipamentos, sinergias = ler_arquivo_equipamentos('dados.txt')
 
-
+    """ia = time.time()
     sol_inicial, indices_inicial = solucao_inicial(orcamento, equipamentos, sinergias)
-    print("Solução inicial:",  indices_inicial)
+    fa = time.time()
+    print("Solução inicial:", sol_inicial, indices_inicial)
     print("Poder inicial:", soma_poder_sinergias(sol_inicial, sinergias, indices_inicial))
+    print(f"Tempo de execução: {fa - ia:.4f} segundos")"""
 
-    sol_final, indices_final = busca_local(equipamentos, sinergias, orcamento, sol_inicial, indices_inicial)
+    ib = time.time()
+    sol_final, indices_final = busca_local(equipamentos, sinergias, orcamento, [(1.0, 0.0), (1.0, 1.0), (1.0, 1.0), (1.0, 0.0), (1.0, 0.0)], [11, 13, 0, 24, 17])
+    fb = time.time()
     print("Melhor solução:",  indices_final)
     print("Melhor poder:", soma_poder_sinergias(sol_final, sinergias, indices_final))
-
+    print(f"Tempo de execução: {fb - ib:.4f} segundos")
 
