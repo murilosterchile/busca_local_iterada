@@ -25,7 +25,7 @@ def ler_arquivo_equipamentos(nome_arquivo):
 
     return orcamento, equipamentos, matriz_sinergia
 
-#solução inicial valida aleatoria
+# solução inicial valida aleatoria
 def solucao_inicial(orcamento,equipamentos,sinergias):
     custo = 0
     aux = []
@@ -59,7 +59,22 @@ def soma_poder_sinergias(equipamentos, sinergias, indices):
 
     return poder_total
 
-#busca local que escolhe o vizinho usando fist improvement
+# atualiza a soma dos poderes e sinergias sem recalcular tudo
+def atualiza_poder_sinergias(poder_atual, equipamentos, sinergias, indices, removido, adicionado):
+    poder_atualizado = poder_atual
+    poder_atualizado -= equipamentos[removido][1]
+    poder_atualizado += equipamentos[adicionado][1]
+
+    for outro in indices:
+        if outro != removido:
+            poder_atualizado -= sinergias[max(removido, outro)][min(removido, outro)]
+            poder_atualizado += sinergias[max(adicionado, outro)][min(adicionado, outro)]
+
+    return poder_atualizado
+
+
+
+# busca local que escolhe o vizinho usando fist improvement
 def busca_local(equipamentos, sinergias, orcamento, solucao_inicial, indices_iniciais):
     otimo_local = solucao_inicial.copy()
     indices_otimo_local = indices_iniciais.copy()
@@ -91,7 +106,7 @@ def busca_local(equipamentos, sinergias, orcamento, solucao_inicial, indices_ini
             if novo_custo <= orcamento:
                 novos_indices = indices_otimo_local.copy()
                 novos_indices[novos_indices.index(i)] = j
-                novo_poder = soma_poder_sinergias([equipamentos[x] for x in novos_indices], sinergias, novos_indices)
+                novo_poder = atualiza_poder_sinergias(poder_otimo_local, equipamentos, sinergias, indices_otimo_local, i, j)
 
                 if novo_poder >= poder_otimo_local:
                     otimo_local = [equipamentos[x] for x in novos_indices]
@@ -100,7 +115,6 @@ def busca_local(equipamentos, sinergias, orcamento, solucao_inicial, indices_ini
                     indices_para_testar = indices_otimo_local.copy()
                     melhorou = True
                     break
-
 
     return otimo_local, indices_otimo_local
 
