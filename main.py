@@ -66,29 +66,31 @@ def busca_local(equipamentos, sinergias, orcamento, solucao_inicial, indices_ini
     poder_otimo_local = soma_poder_sinergias(otimo_local, sinergias, indices_otimo_local)
     melhorou = True
     indices_para_testar = indices_otimo_local.copy()
-    random.shuffle(indices_para_testar)
+
 
     while melhorou:
         melhorou = False
+        vizinhos = list(set(range(len(equipamentos))) - set(indices_otimo_local))
+        random.shuffle(vizinhos)
 
-        for j in indices_para_testar:
-            vizinhos = list(set(range(len(equipamentos))) - set(indices_otimo_local))
+        if not vizinhos:
+            break
 
-            if not vizinhos:
-                break
+        i = random.choice(indices_para_testar)
 
-            i = random.choice(vizinhos)
+        for j in vizinhos:
+
             novo_custo = 0
 
             for x in indices_otimo_local:
-                if x != j:
+                if x != i:
                     novo_custo += equipamentos[x][0]
 
-            novo_custo += equipamentos[i][0]
+            novo_custo += equipamentos[j][0]
 
             if novo_custo <= orcamento:
                 novos_indices = indices_otimo_local.copy()
-                novos_indices[novos_indices.index(j)] = i
+                novos_indices[novos_indices.index(i)] = j
                 novo_poder = soma_poder_sinergias([equipamentos[x] for x in novos_indices], sinergias, novos_indices)
 
                 if novo_poder >= poder_otimo_local:
@@ -96,7 +98,6 @@ def busca_local(equipamentos, sinergias, orcamento, solucao_inicial, indices_ini
                     indices_otimo_local = novos_indices
                     poder_otimo_local = novo_poder
                     indices_para_testar = indices_otimo_local.copy()
-                    random.shuffle(indices_para_testar)
                     melhorou = True
                     break
 
@@ -107,15 +108,15 @@ def busca_local(equipamentos, sinergias, orcamento, solucao_inicial, indices_ini
 if __name__ == '__main__':
     orcamento, equipamentos, sinergias = ler_arquivo_equipamentos('dados.txt')
 
-    """ia = time.time()
+    ia = time.time()
     sol_inicial, indices_inicial = solucao_inicial(orcamento, equipamentos, sinergias)
     fa = time.time()
-    print("Solução inicial:", sol_inicial, indices_inicial)
+    print("Solução inicial:", indices_inicial)
     print("Poder inicial:", soma_poder_sinergias(sol_inicial, sinergias, indices_inicial))
-    print(f"Tempo de execução: {fa - ia:.4f} segundos")"""
+    print(f"Tempo de execução: {fa - ia:.4f} segundos")
 
     ib = time.time()
-    sol_final, indices_final = busca_local(equipamentos, sinergias, orcamento, [(1.0, 0.0), (1.0, 1.0), (1.0, 1.0), (1.0, 0.0), (1.0, 0.0)], [11, 13, 0, 24, 17])
+    sol_final, indices_final = busca_local(equipamentos, sinergias, orcamento, sol_inicial, indices_inicial)
     fb = time.time()
     print("Melhor solução:",  indices_final)
     print("Melhor poder:", soma_poder_sinergias(sol_final, sinergias, indices_final))
