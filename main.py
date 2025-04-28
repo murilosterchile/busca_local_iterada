@@ -1,5 +1,6 @@
 import random
 import time
+import math
 
 # função para ler o arquivo de dados
 def ler_arquivo_equipamentos(nome_arquivo):
@@ -81,11 +82,10 @@ def busca_local(equipamentos, sinergias, orcamento, solucao_inicial, indices_ini
     poder_otimo_local = soma_poder_sinergias(otimo_local, sinergias, indices_otimo_local)
     melhorou = True
     indices_para_testar = indices_otimo_local.copy()
-
+    vizinhos = list(set(range(len(equipamentos))) - set(indices_otimo_local))
 
     while melhorou:
         melhorou = False
-        vizinhos = list(set(range(len(equipamentos))) - set(indices_otimo_local))
         random.shuffle(vizinhos)
 
         if not vizinhos:
@@ -114,9 +114,37 @@ def busca_local(equipamentos, sinergias, orcamento, solucao_inicial, indices_ini
                     poder_otimo_local = novo_poder
                     indices_para_testar = indices_otimo_local.copy()
                     melhorou = True
+                    vizinhos = list(set(range(len(equipamentos))) - set(indices_otimo_local))
                     break
 
-    return otimo_local, indices_otimo_local
+
+
+    return otimo_local, indices_otimo_local,vizinhos
+
+
+# perturbacao nos indices atuais da busca local
+# fator deve ser um valor entre 0 e 1, onde 0 é nenhuma perturbacao e 1 é a maior perturbacao possivel
+def perturbacao(indices_atuais, vizinhos, fator):
+    numero_trocas = fator*(len(indices_atuais))
+    numero_trocas = math.ceil(numero_trocas)
+
+    vizinhos_disponiveis = vizinhos.copy()
+    random.shuffle(vizinhos_disponiveis)
+
+    novos_indices = indices_atuais.copy()
+    posicoes_para_trocar = random.sample(range(len(indices_atuais)), numero_trocas)
+
+    for pos in posicoes_para_trocar:
+        if vizinhos_disponiveis:
+
+            novo_indice = vizinhos_disponiveis.pop()
+            novos_indices[pos] = novo_indice
+
+        else:
+            break
+
+    return novos_indices
+
 
 
 if __name__ == '__main__':
@@ -130,7 +158,7 @@ if __name__ == '__main__':
     print(f"Tempo de execução: {fa - ia:.4f} segundos")
 
     ib = time.time()
-    sol_final, indices_final = busca_local(equipamentos, sinergias, orcamento, sol_inicial, indices_inicial)
+    sol_final, indices_final,vizinhos = busca_local(equipamentos, sinergias, orcamento, sol_inicial, indices_inicial)
     fb = time.time()
     print("Melhor solução:",  indices_final)
     print("Melhor poder:", soma_poder_sinergias(sol_final, sinergias, indices_final))
