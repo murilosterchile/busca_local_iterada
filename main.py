@@ -63,14 +63,17 @@ def soma_poder_sinergias(equipamentos, sinergias, indices):
     return poder_total
 
 # atualiza a soma dos poderes e sinergias sem recalcular tudo
-def atualiza_poder_sinergias(poder_atual, equipamentos, sinergias, indices, removido, adicionado):
+def atualiza_poder_sinergias(poder_atual, equipamentos, sinergias, indices_antes, indices_depois, removido, adicionado):
     poder_atualizado = poder_atual
     poder_atualizado -= equipamentos[removido][1]
     poder_atualizado += equipamentos[adicionado][1]
 
-    for outro in indices:
+    for outro in indices_antes:
         if outro != removido:
             poder_atualizado -= sinergias[max(removido, outro)][min(removido, outro)]
+
+    for outro in indices_depois:
+        if outro != adicionado:
             poder_atualizado += sinergias[max(adicionado, outro)][min(adicionado, outro)]
 
     return poder_atualizado
@@ -109,25 +112,19 @@ def busca_local(equipamentos, sinergias, orcamento, solucao_inicial, indices_ini
             if novo_custo <= orcamento:
                 novos_indices = indices_otimo_local.copy()
                 novos_indices[novos_indices.index(i)] = j
-                novo_poder = atualiza_poder_sinergias(poder_otimo_local, equipamentos, sinergias, indices_otimo_local, i, j)
+                novo_poder = atualiza_poder_sinergias(poder_otimo_local, equipamentos, sinergias, indices_otimo_local,novos_indices, i, j)
 
                 if novo_poder >= poder_otimo_local:
                     otimo_local = [equipamentos[x] for x in novos_indices]
                     indices_otimo_local = novos_indices
                     poder_otimo_local = novo_poder
-                    # tempo decorrido
-                    print(f"Tempo de troca: {time.time() - tempo_inicio:.4f} segundos")
-                    # novo melhor local
-                    print (poder_otimo_local)
-                    # visualização_solução()
-                        #precisa de uma função, fazer depois que resolver o resto
                     indices_para_testar = indices_otimo_local.copy()
                     melhorou = True
                     vizinhos = list(set(range(len(equipamentos))) - set(indices_otimo_local))
                     break
 
     tempo_final = time.time()
-    return otimo_local, indices_otimo_local,vizinhos, tempo_inicio, tempo_final
+    return poder_otimo_local,otimo_local, indices_otimo_local,vizinhos, tempo_inicio, tempo_final
 
 
 # perturbacao nos indices atuais da busca local
@@ -150,8 +147,54 @@ def perturbacao(indices_atuais, vizinhos, fator):
 
         else:
             break
-
+    #verificar se precisa atualizar as soluções
     return novos_indices
+
+
+def busca_local_iterada(equipamentos, sinergias, orcamento, solucao_inicial, indices_iniciais):
+    valor_otimo_global = 0
+    fator = 0.2
+    novos_indices = indices_iniciais.copy()
+    nova_solucao = solucao_inicial.copy()
+    iteracao = 0
+
+    ia = time.time()
+    while True:
+
+        poder_atual, solução_atual, indices_atuais, vizinhos, tempo_inicio, tempo_final = busca_local(equipamentos, sinergias, orcamento, nova_solucao, novos_indices)
+
+        # controle para saber se esta caindo no mesmo otimo local
+        indices_comparacao = indices_atuais.copy()
+
+        # controla o otimo global
+        if poder_atual > valor_otimo_global:
+            valor_otimo_global = poder_atual
+            indices_otimo = indices_atuais.copy()
+            it = iteracao
+            fa = time.time()
+            print(f"Tempo da busca local {iteracao}: {fa - ia:.2f} segundos")
+            print(f"Melhor solução já encontrada: {valor_otimo_global}")
+
+        # nível de perturbacao adaptativo, se continua no mesmo melhor local, aumenta o fator até sair dele, apos isso volta para o valor inicial
+        if indices_comparacao == indices_otimo:
+            if fator >=0 and fator < 0.9:
+                fator += 0.1
+        else:
+            fator = 0.2
+
+
+        alteracao = perturbacao(indices_atuais, vizinhos, fator)
+        novos_indices = alteracao.copy()
+        nova_solucao = [equipamentos[x] for x in novos_indices]
+
+        iteracao += 1
+        if iteracao >= 50:
+            break
+
+    fb = time.time()
+
+    print('valor ótimo global:', valor_otimo_global, 'com interação:', it, 'tempo total:', f'{fb - ia:.2f}')
+    print(indices_otimo)
 
 
 
@@ -162,15 +205,6 @@ if __name__ == '__main__':
     # sys.argv[3]: parametro de variação
     orcamento, equipamentos, sinergias = ler_arquivo_equipamentos()
 
-    ia = time.time()
     sol_inicial, indices_inicial = solucao_inicial(orcamento, equipamentos, sinergias)
-    fa = time.time()
-    print("Solução inicial:", indices_inicial)
-    print("Poder inicial:", soma_poder_sinergias(sol_inicial, sinergias, indices_inicial))
-    print(f"Tempo de execução: {fa - ia:.4f} segundos")
 
-    sol_final, indices_final, vizinhos, ib, fb = busca_local(equipamentos, sinergias, orcamento, sol_inicial, indices_inicial)
-    print("Melhor solução:",  indices_final)
-    print("Melhor poder:", soma_poder_sinergias(sol_final, sinergias, indices_final))
-    print(f"Tempo de execução: {fb - ib:.4f} segundos")
-
+    busca_local_iterada(equipamentos, sinergias, orcamento, sol_inicial, indices_inicial)
