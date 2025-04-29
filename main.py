@@ -114,7 +114,7 @@ def busca_local(equipamentos, sinergias, orcamento, solucao_inicial, indices_ini
                 novos_indices[novos_indices.index(i)] = j
                 novo_poder = atualiza_poder_sinergias(poder_otimo_local, equipamentos, sinergias, indices_otimo_local,novos_indices, i, j)
 
-                if novo_poder >= poder_otimo_local:
+                if novo_poder > poder_otimo_local:
                     otimo_local = [equipamentos[x] for x in novos_indices]
                     indices_otimo_local = novos_indices
                     poder_otimo_local = novo_poder
@@ -166,6 +166,8 @@ def busca_local_iterada(equipamentos, sinergias, orcamento, solucao_inicial, ind
         # controle para saber se esta caindo no mesmo otimo local
         indices_comparacao = indices_atuais.copy()
 
+        vizinhos_atual = vizinhos.copy()
+
         # controla o otimo global
         if poder_atual > valor_otimo_global:
             valor_otimo_global = poder_atual
@@ -177,13 +179,13 @@ def busca_local_iterada(equipamentos, sinergias, orcamento, solucao_inicial, ind
 
         # nível de perturbacao adaptativo, se continua no mesmo melhor local, aumenta o fator até sair dele, apos isso volta para o valor inicial
         if indices_comparacao == indices_otimo:
-            if fator >=0 and fator < 0.9:
+            if fator >=0 and fator < 0.8:
                 fator += 0.1
         else:
             fator = 0.2
 
 
-        alteracao = perturbacao(indices_atuais, vizinhos, fator)
+        alteracao = perturbacao(indices_atuais, vizinhos_atual, fator)
         novos_indices = alteracao.copy()
         nova_solucao = [equipamentos[x] for x in novos_indices]
 
