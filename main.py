@@ -143,8 +143,11 @@ def perturbacao(indices_atuais, vizinhos, fator):
     random.shuffle(vizinhos_disponiveis)
 
     novos_indices = indices_atuais.copy()
+
+    # escolhe as posicoes da solucao atual para trocar
     posicoes_para_trocar = random.sample(range(len(indices_atuais)), numero_trocas)
 
+    # troca as posicoes escolhidas com os vizinhos disponiveis escolhidos aleatoriamente
     for pos in posicoes_para_trocar:
         if vizinhos_disponiveis:
 
@@ -153,11 +156,11 @@ def perturbacao(indices_atuais, vizinhos, fator):
 
         else:
             break
-    #verificar se precisa atualizar as soluções
+
     return novos_indices
 
 
-def busca_local_iterada(equipamentos, sinergias, orcamento, solucao_inicial, indices_iniciais):
+def busca_local_iterada(equipamentos, sinergias, orcamento, solucao_inicial, indices_iniciais, parada):
     valor_otimo_global = 0
     fator = 0.2
     novos_indices = indices_iniciais.copy()
@@ -168,7 +171,7 @@ def busca_local_iterada(equipamentos, sinergias, orcamento, solucao_inicial, ind
     while True:
 
         #busca local
-        poder_atual, solução_atual, indices_atuais, vizinhos = busca_local(equipamentos, sinergias, orcamento, nova_solucao, novos_indices)
+        poder_atual, solucao_atual, indices_atuais, vizinhos = busca_local(equipamentos, sinergias, orcamento, nova_solucao, novos_indices)
 
         # controle para saber se esta caindo no mesmo otimo local
         indices_comparacao = indices_atuais.copy()
@@ -182,8 +185,10 @@ def busca_local_iterada(equipamentos, sinergias, orcamento, solucao_inicial, ind
             indices_otimo = indices_atuais.copy()
             it = iteracao
             fa = time.time()
-            print(f"Tempo da busca local {iteracao}: {fa - ia:.2f} segundos")
-            print(f"Melhor solução já encontrada: {valor_otimo_global}\n")
+            print(f"Tempo ate a busca local {iteracao + 1}: {fa - ia:.2f} segundos")
+            print(f"Melhor solução já encontrada: {valor_otimo_global}")
+            print(f"indices dos equipamentos da melhor solução já encontrada: {sorted(indices_otimo)}\n")
+
 
         # nível de perturbacao adaptativo, se continua no mesmo melhor local, aumenta o fator até sair dele, apos isso volta para o valor inicial
         if indices_comparacao == indices_otimo:
@@ -198,12 +203,14 @@ def busca_local_iterada(equipamentos, sinergias, orcamento, solucao_inicial, ind
         nova_solucao = [equipamentos[x] for x in novos_indices]
 
         iteracao += 1
-        if iteracao >= 38:
+        if iteracao >= parada:
             break
+
 
     fb = time.time()
 
-    print('valor ótimo global:', valor_otimo_global, 'com iteração:', it, 'tempo total:', f'{fb - ia:.2f}')
+    print("\n"'valor ótimo global:', valor_otimo_global, ', na iteração:', it+1, ', tempo total de excucao:', f'{fb - ia:.2f} segundos')
+    print(f"fator perturbacao: {0.2}\n")
     print("\n")
 
 
@@ -212,10 +219,14 @@ if __name__ == '__main__':
     # sys.argv[1]: caminho do arquivo de entrada
     # sys.argv[2]: valor de critério de parada
     # sys.argv[3]: parametro de variação
+    # ex: python main.py 05.txt 200 10
+
     random.seed(sys.argv[3])
 
     orcamento, equipamentos, sinergias = ler_arquivo_equipamentos()
 
     sol_inicial, indices_inicial = solucao_inicial(orcamento, equipamentos, sinergias)
 
-    busca_local_iterada(equipamentos, sinergias, orcamento, sol_inicial, indices_inicial)
+    print(f'\nindices dos equipamentos da solução incial: {sorted(indices_inicial)} \npoder solucao incial: {soma_poder_sinergias(sol_inicial, sinergias, indices_inicial)}\n')
+
+    busca_local_iterada(equipamentos, sinergias, orcamento, sol_inicial, indices_inicial, int(sys.argv[2]))
