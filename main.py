@@ -34,18 +34,17 @@ def solucao_inicial(orcamento,equipamentos,sinergias):
     aux = []
     aux2 = []
 
-    #escolhe um equipamento aleatoriamente enquanto o orcamento não for atingido e adiciona a solução inicial
+    # escolhe um equipamento aleatoriamente enquanto o orcamento não for atingido e adiciona a solução inicial
     while orcamento > custo:
         sin = random.choice(sinergias)
         i = sinergias.index(sin)
 
         if i not in aux2:
             aux2.append(i)
-            if custo + equipamentos[i][0] <= orcamento:
-                custo += equipamentos[i][0]
+            custo += equipamentos[i][0]
             aux.append(equipamentos[i])
 
-    return aux,aux2
+    return aux, aux2
 
 
 # soma o poder e sinergia de um conjunto de equipamentos
@@ -101,10 +100,10 @@ def busca_local(equipamentos, sinergias, orcamento, solucao_inicial, indices_ini
         if not vizinhos:
             break
 
-        #escolhe aleatoriamente um indice da solução atual para testar
+        # escolhe aleatoriamente um indice da solução atual para testar
         i = random.choice(indices_para_testar)
 
-        # testa todos os vizinhos do i e verifica se algum melhora a solução,  retorna uma nova solução atualizada caso seja verdade
+        # testa todos os vizinhos do i e verifica se algum melhora a solução, retorna uma nova solução atualizada caso seja verdade
         for j in vizinhos:
 
             novo_custo = 0
@@ -115,12 +114,14 @@ def busca_local(equipamentos, sinergias, orcamento, solucao_inicial, indices_ini
 
             novo_custo += equipamentos[j][0]
 
+            # verifica se o custo esta dentro do orcamento
             if novo_custo <= orcamento:
                 novos_indices = indices_otimo_local.copy()
                 novos_indices[novos_indices.index(i)] = j
                 novo_poder = atualiza_poder_sinergias(poder_otimo_local, equipamentos, sinergias, indices_otimo_local,
                                                       novos_indices, i, j)
 
+                # verifica se a nova solucao é melhor que a atual, caso seja, atualiza a solucao atual
                 if novo_poder > poder_otimo_local:
                     otimo_local = [equipamentos[x] for x in novos_indices]
                     indices_otimo_local = novos_indices
@@ -130,7 +131,7 @@ def busca_local(equipamentos, sinergias, orcamento, solucao_inicial, indices_ini
                     vizinhos = list(set(range(len(equipamentos))) - set(indices_otimo_local))
                     break
 
-    return poder_otimo_local,otimo_local, indices_otimo_local,vizinhos
+    return poder_otimo_local, otimo_local, indices_otimo_local, vizinhos
 
 
 # perturbacao nos indices atuais da busca local
@@ -170,13 +171,13 @@ def busca_local_iterada(equipamentos, sinergias, orcamento, solucao_inicial, ind
     ia = time.time()
     while True:
 
-        #busca local
+        # busca local
         poder_atual, solucao_atual, indices_atuais, vizinhos = busca_local(equipamentos, sinergias, orcamento, nova_solucao, novos_indices)
 
         # controle para saber se esta caindo no mesmo otimo local
         indices_comparacao = indices_atuais.copy()
 
-        #atualiza os vizinhos para a perturbacao
+        # atualiza os vizinhos para a perturbacao
         vizinhos_atual = vizinhos.copy()
 
         # controla o otimo global
@@ -190,19 +191,21 @@ def busca_local_iterada(equipamentos, sinergias, orcamento, solucao_inicial, ind
             print(f"indices dos equipamentos da melhor solução já encontrada: {sorted(indices_otimo)}\n")
 
 
-        # nível de perturbacao adaptativo, se continua no mesmo melhor local, aumenta o fator até sair dele, apos isso volta para o valor inicial
+        # nível de perturbacao adaptativo, se continua no mesmo otimo local, aumenta o fator até sair dele, apos isso volta para o valor inicial
         if indices_comparacao == indices_otimo:
             if fator >=0 and fator < 0.6:
                 fator += 0.05
         else:
             fator = 0.2
 
-        #perturbacao na solucao atual
+        # perturbacao na solucao atual
         alteracao = perturbacao(indices_atuais, vizinhos_atual, fator)
         novos_indices = alteracao.copy()
         nova_solucao = [equipamentos[x] for x in novos_indices]
 
         iteracao += 1
+
+        # criterio de parada
         if iteracao >= parada:
             break
 
@@ -221,12 +224,15 @@ if __name__ == '__main__':
     # sys.argv[3]: parametro de variação
     # ex: python main.py 05.txt 200 10
 
+    # seed para reproducibilidade
     random.seed(sys.argv[3])
 
     orcamento, equipamentos, sinergias = ler_arquivo_equipamentos()
 
+    # solucao inicial
     sol_inicial, indices_inicial = solucao_inicial(orcamento, equipamentos, sinergias)
 
     print(f'\nindices dos equipamentos da solução incial: {sorted(indices_inicial)} \npoder solucao incial: {soma_poder_sinergias(sol_inicial, sinergias, indices_inicial)}\n')
 
+    # busca local iterada
     busca_local_iterada(equipamentos, sinergias, orcamento, sol_inicial, indices_inicial, int(sys.argv[2]))
