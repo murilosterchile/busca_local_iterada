@@ -10,17 +10,18 @@ def ler_arquivo_equipamentos():
     with open(sys.argv[1], 'r') as arquivo:
         linha1 = arquivo.readline().strip().split()
         orcamento = float(linha1[0])
-        n = int(linha1[1])
+        num_equipamentos = int(linha1[1])
 
         equipamentos = []
-        for _ in range(n):
+        for _ in range(num_equipamentos):
             custo, poder = map(float, arquivo.readline().strip().split())
             equipamentos.append((custo, poder))
 
+        #matriz de sinergia com valores na diagonal superior direita iguais a 0.0
         matriz_sinergia = []
-        for i in range(n):
+        for i in range(num_equipamentos):
             valores = list(map(float, arquivo.readline().strip().split()))
-            linha_matriz = [0.0] * n
+            linha_matriz = [0.0] * num_equipamentos
             for j in range(i):
                 if j < len(valores):
                     linha_matriz[j] = valores[j]
@@ -31,20 +32,20 @@ def ler_arquivo_equipamentos():
 # solução inicial valida aleatoria
 def solucao_inicial(orcamento,equipamentos,sinergias):
     custo = 0
-    aux = []
-    aux2 = []
+    lista_equipamentos = []
+    id_equipamentos = []
+    n = len(equipamentos)
 
     # escolhe um equipamento aleatoriamente enquanto o orcamento não for atingido e adiciona a solução inicial
     while orcamento > custo:
-        sin = random.choice(sinergias)
-        i = sinergias.index(sin)
+        i = random.choice(range(n))
 
-        if i not in aux2:
-            aux2.append(i)
+        if i not in id_equipamentos:
+            id_equipamentos.append(i)
             custo += equipamentos[i][0]
-            aux.append(equipamentos[i])
+            lista_equipamentos.append(equipamentos[i])
 
-    return aux, aux2
+    return lista_equipamentos, id_equipamentos
 
 
 # soma o poder e sinergia de um conjunto de equipamentos
@@ -221,7 +222,7 @@ if __name__ == '__main__':
     # receber por linha de comando:
     # sys.argv[1]: caminho do arquivo de entrada
     # sys.argv[2]: valor de critério de parada
-    # sys.argv[3]: parametro de variação
+    # sys.argv[3]: seed para o random
     # ex: python main.py 05.txt 200 10
 
     # seed para reproducibilidade
